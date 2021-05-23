@@ -14,6 +14,7 @@ namespace Isolation_Diary
             // Properties
             protected Text Text { get; set; }
             protected List<ControlGroup> ControlGroups { get; set; }
+            protected ControlGroup FocusedControlGroup { get; set; }
 
             // Constructor
             public Page()
@@ -45,7 +46,7 @@ namespace Isolation_Diary
                             }
                             )
                         );
-                this.ControlGroups[0].FocusFirst();
+                this.FocusedControlGroup = this.ControlGroups[0].FocusFirst();
             }
 
             // Methods
@@ -59,7 +60,7 @@ namespace Isolation_Diary
             }
             public void WaitForInput()
             {
-
+                this.FocusedControlGroup.WaitForInput();
             }
 
         }
@@ -84,6 +85,9 @@ namespace Isolation_Diary
             // Properties
             protected Text Text { get; set; }
             protected List<ControlLine> ControlLines { get; set; }
+            protected Boolean Focused { get; set; }
+            protected ControlLine FocusedControlLine { get; set; }
+
 
             // Constructor
             public ControlGroup(Text text, List<ControlLine> controlLines)
@@ -102,9 +106,16 @@ namespace Isolation_Diary
                 }
                 Console.Write("\n");
             }
-            public void FocusFirst()
+            public ControlGroup FocusFirst()
             {
-                this.ControlLines[0].FocusFirst();
+                this.Focused = true;
+                this.FocusedControlLine = this.ControlLines[0].FocusFirst();
+                return this;
+            }
+
+            internal void WaitForInput()
+            {
+                this.FocusedControlLine.WaitForInput();
             }
         }
 
@@ -113,6 +124,7 @@ namespace Isolation_Diary
             // properties
             protected Text Text { get; set; }
             protected Control Control { get; set; }
+            protected Boolean Focused { get; set; }
 
             // constructor
             public ControlLine(Text text, Control control)
@@ -127,9 +139,16 @@ namespace Isolation_Diary
                 this.Text.Print();
                 this.Control.Print();
             }
-            public void FocusFirst()
+
+            public ControlLine FocusFirst()
             {
+                this.Focused = true;
                 this.Control.Focus();
+                return this;
+            }
+            internal void WaitForInput()
+            {
+                this.Control.WaitForInput();
             }
         }
 
@@ -140,13 +159,15 @@ namespace Isolation_Diary
 
             // methods
             public abstract void Print();
-            public void Focus()
+            public Control Focus()
             {
                 this.Focused = true;
+                return this;
             }
+            public abstract void WaitForInput();
         }
 
-        public class Field : Control
+        public abstract class Field : Control
         {
            override public void Print()
             {
@@ -158,16 +179,26 @@ namespace Isolation_Diary
                     Console.WriteLine("[     ]");
                 }
             }
+            public abstract override void WaitForInput();
         }
 
         public class FieldRating : Field
         {
+            override public void WaitForInput()
+            {
+                string key = Console.ReadKey().KeyChar.ToString();
+
+            }
 
         }
 
         public class FieldTime : Field
         {
+            override public void WaitForInput()
+            {
+                string key = Console.ReadKey().KeyChar.ToString();
 
+            }
         }
 
         public class Button : Control
@@ -182,6 +213,12 @@ namespace Isolation_Diary
                 {
                     Console.WriteLine("[ EXIT ]");
                 }
+            }
+            override public void WaitForInput()
+            {
+                string key = Console.ReadKey().KeyChar.ToString();
+
+                Console.WriteLine($"[[ {key} ]]");
             }
         }
 
