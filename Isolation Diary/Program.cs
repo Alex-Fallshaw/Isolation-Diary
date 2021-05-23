@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Isolation_Diary
@@ -10,14 +11,34 @@ namespace Isolation_Diary
         public static string[] attributes = {"Date", "Symptoms", "Mental", "SkillTime", "SkillRating"};
         public class Page
         {
+            // Properties
             protected Text Text { get; set; }
+            protected List<ControlGroup> ControlGroups { get; set; }
+
+            // Constructor
             public Page()
             {
-                this.Text = new Text("Welcome to the Isolation Diary!");
+                this.Text = new Text("Welcome to the Isolation Diary! \n");
+                this.ControlGroups = new List<ControlGroup>();
+                this.ControlGroups.Add(
+                    new ControlGroup(
+                        new Text("Health: "),
+                        new List<ControlLine> {
+                            new ControlLine(),
+                            new ControlLine()
+                        }
+                        )
+                    );
             }
+
+            // Methods
             public void Print()
             {
-                Console.WriteLine("page");
+                this.Text.Print();
+                foreach (ControlGroup cg in this.ControlGroups)
+                {
+                    cg.Print();
+                }
             }
             public void WaitForInput()
             {
@@ -33,6 +54,54 @@ namespace Isolation_Diary
             public Text(string value)
             {
                 this.Value = value;
+            }
+
+            public void Print()
+            {
+                Console.WriteLine(this.Value);
+            }
+        }
+
+        public class ControlGroup
+        {
+            // Properties
+            protected Text Text { get; set; }
+            protected List<ControlLine> ControlLines { get; set; }
+
+            // Constructor
+            public ControlGroup(Text text, List<ControlLine> controlLines)
+            {
+                this.Text = text;
+                this.ControlLines = controlLines;
+            }
+
+            // Methods
+            public void Print()
+            {
+                this.Text.Print();
+                foreach (ControlLine cl in this.ControlLines)
+                {
+                    cl.Print();
+                }
+            }
+        }
+
+        public class ControlLine
+        {
+            // properties
+            protected Text Text { get; set; }
+            // TO DO! control
+
+            // constructor
+            public ControlLine()
+            {
+                this.Text = new Text("ControlLine");
+            }
+
+            // methods
+            public void Print()
+            {
+                Console.WriteLine("ControlLine");
             }
         }
 
