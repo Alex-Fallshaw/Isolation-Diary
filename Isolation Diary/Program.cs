@@ -2,19 +2,23 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Isolation_Diary
 {
+
     class Program
     {
+        public enum ProgramAction { NoAction, Accept, MoveNext, MovePrevious, Exit }
         private static string FILENAME = "Isolation_Diary.csv";
         public static string[] attributes = {"Date", "Symptoms", "Mental", "SkillTime", "SkillRating"};
+
         public class Page
         {
             // Properties
             protected Text Text { get; set; }
             protected List<ControlGroup> ControlGroups { get; set; }
-            protected ControlGroup FocusedControlGroup { get; set; }
+            protected int FocusedControlGroup { get; set; }
 
             // Constructor
             public Page()
@@ -46,7 +50,7 @@ namespace Isolation_Diary
                             }
                             )
                         );
-                this.FocusedControlGroup = this.ControlGroups[0].FocusFirst();
+                FocusFirst();
             }
 
             // Methods
@@ -60,9 +64,59 @@ namespace Isolation_Diary
             }
             public void WaitForInput()
             {
-                this.FocusedControlGroup.WaitForInput();
+                ProgramAction a = this.getFocusedControlGroup().WaitForInput();
+                while (a != ProgramAction.Exit)
+                {
+                    if (a == ProgramAction.MoveNext) { this.MoveNext(); }
+                    else if (a == ProgramAction.MovePrevious) { this.MovePrevious(); }
+                    Console.Clear();
+                    this.Print();
+                    a = this.getFocusedControlGroup().WaitForInput();
+                }
             }
 
+            private void MoveNext()
+            {
+                if (getFocusedControlGroup().canMoveNext())
+                {
+                    getFocusedControlGroup().MoveNext();
+                }
+                else
+                {
+                    FocusFirst();
+                }
+            }
+
+            private void MovePrevious()
+            {
+                if (getFocusedControlGroup().canMovePrevious())
+                {
+                    getFocusedControlGroup().MovePrevious();
+                }
+                else
+                {
+                    FocusLast();
+                }
+            }
+
+            private void FocusFirst()
+            {
+                getFocusedControlGroup().UnFocus();
+                this.ControlGroups[0].FocusFirst();
+                this.FocusedControlGroup = 0;
+            }
+
+            private void FocusLast()
+            {
+                getFocusedControlGroup().UnFocus();
+                this.ControlGroups[-1].FocusLast();
+                this.FocusedControlGroup = this.ControlGroups.Count - 1;
+            }
+
+            private ControlGroup getFocusedControlGroup()
+            {
+                return this.ControlGroups[this.FocusedControlGroup];
+            }
         }
 
         public class Text
@@ -86,8 +140,7 @@ namespace Isolation_Diary
             protected Text Text { get; set; }
             protected List<ControlLine> ControlLines { get; set; }
             protected Boolean Focused { get; set; }
-            protected ControlLine FocusedControlLine { get; set; }
-
+            protected int FocusedControlLine { get; set; }
 
             // Constructor
             public ControlGroup(Text text, List<ControlLine> controlLines)
@@ -106,16 +159,60 @@ namespace Isolation_Diary
                 }
                 Console.Write("\n");
             }
-            public ControlGroup FocusFirst()
+
+            public void FocusFirst()
             {
                 this.Focused = true;
-                this.FocusedControlLine = this.ControlLines[0].FocusFirst();
-                return this;
+                this.ControlLines[0].Focus();
+                this.FocusedControlLine = 0;
             }
 
-            internal void WaitForInput()
+            public void FocusLast()
             {
-                this.FocusedControlLine.WaitForInput();
+                this.Focused = true;
+                this.ControlLines[-1].Focus();
+                this.FocusedControlLine = this.ControlLines.Count - 1;
+            }
+
+            internal ProgramAction WaitForInput()
+            {
+                return this.getFocusedControlLine().WaitForInput();
+            }
+
+            private ControlLine getFocusedControlLine()
+            {
+                return this.ControlLines[this.FocusedControlLine];
+            }
+
+            public bool canMoveNext()
+            {
+                return this.FocusedControlLine < (this.ControlLines.Count - 1);
+            }
+
+            public bool canMovePrevious()
+            {
+                return this.FocusedControlLine > 0;
+            }
+
+            public void MoveNext()
+            {
+                this.getFocusedControlLine().UnFocus();
+                this.FocusedControlLine = this.FocusedControlLine + 1;
+                this.getFocusedControlLine().Focus();
+            }
+
+            public void MovePrevious()
+            {
+                this.getFocusedControlLine().UnFocus();
+                this.FocusedControlLine = this.FocusedControlLine - 1;
+                this.getFocusedControlLine().Focus();
+            }
+
+            public void UnFocus()
+            {
+                this.getFocusedControlLine().UnFocus();
+                this.FocusedControlLine = -1;
+                this.Focused = false;
             }
         }
 
@@ -140,15 +237,21 @@ namespace Isolation_Diary
                 this.Control.Print();
             }
 
-            public ControlLine FocusFirst()
+            public void Focus()
             {
                 this.Focused = true;
                 this.Control.Focus();
-                return this;
             }
-            internal void WaitForInput()
+
+            internal ProgramAction WaitForInput()
             {
-                this.Control.WaitForInput();
+                return this.Control.WaitForInput();
+            }
+
+            public void UnFocus()
+            {
+                this.Control.UnFocus();
+                this.Focused = false;
             }
         }
 
@@ -159,45 +262,167 @@ namespace Isolation_Diary
 
             // methods
             public abstract void Print();
+
             public Control Focus()
             {
                 this.Focused = true;
                 return this;
             }
-            public abstract void WaitForInput();
+
+            public void UnFocus()
+            {
+                this.Focused = false;
+            }
+
+            public abstract ProgramAction WaitForInput();
+
+            protected ProgramAction Movement(ConsoleKeyInfo key)
+            {
+                // TODO FIXME
+                return ProgramAction.MoveNext;
+            }
+
+            protected bool IsMovementKey(ConsoleKeyInfo key)
+            {
+                // if (((key.Modifiers & ConsoleModifiers.Shift) != 0) & (key.Key == System.ConsoleKey.Tab))
+                if ((key.Key == System.ConsoleKey.Tab))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            protected abstract bool IsAcceptKey(ConsoleKeyInfo key);
+
         }
 
         public abstract class Field : Control
         {
-           override public void Print()
+            override abstract public void Print();
+
+            public abstract override ProgramAction WaitForInput();
+
+            protected bool IsAppendKey(ConsoleKeyInfo key)
             {
-                if (this.Focused) {
-                    Console.WriteLine("[[     ]]");
+                char[] appendChars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+
+                // if (((key.Modifiers & ConsoleModifiers.Shift) != 0) & (key.Key == System.ConsoleKey.Tab))
+                if (appendChars.Contains(key.KeyChar))
+                {
+                    return true;
                 }
                 else
                 {
-                    Console.WriteLine("[     ]");
+                    return false;
                 }
             }
-            public abstract override void WaitForInput();
+
+            protected bool IsRemoveKey(ConsoleKeyInfo key)
+            {
+                // if (((key.Modifiers & ConsoleModifiers.Shift) != 0) & (key.Key == System.ConsoleKey.Tab))
+                if ((key.Key == System.ConsoleKey.Backspace))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            override protected bool IsAcceptKey(ConsoleKeyInfo key)
+            {
+                if (key.Key == System.ConsoleKey.Enter)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
         }
 
         public class FieldRating : Field
         {
-            override public void WaitForInput()
+            override public ProgramAction WaitForInput()
             {
-                string key = Console.ReadKey().KeyChar.ToString();
-
+                ConsoleKeyInfo key = Console.ReadKey();
+                if (IsMovementKey(key))
+                {
+                    return Movement(key);
+                }
+                else if (IsAppendKey(key))
+                {
+                    return ProgramAction.NoAction;
+                }
+                else if (IsRemoveKey(key))
+                {
+                    return ProgramAction.NoAction;
+                }
+                else if (IsAcceptKey(key))
+                {
+                    return ProgramAction.MoveNext;
+                }
+                else
+                {
+                    return ProgramAction.NoAction;
+                }
             }
 
+            override public void Print()
+            {
+                if (this.Focused)
+                {
+                    Console.WriteLine("(0 to 9) [[     ]]");
+                }
+                else
+                {
+                    Console.WriteLine("(0 to 9)  [     ]");
+                }
+            }
         }
 
         public class FieldTime : Field
         {
-            override public void WaitForInput()
+            override public ProgramAction WaitForInput()
             {
-                string key = Console.ReadKey().KeyChar.ToString();
+                ConsoleKeyInfo key = Console.ReadKey();
+                if (IsMovementKey(key))
+                {
+                    return Movement(key);
+                }
+                else if (IsAppendKey(key))
+                {
+                    return ProgramAction.NoAction;
+                }
+                else if (IsRemoveKey(key))
+                {
+                    return ProgramAction.NoAction;
+                }
+                else if (IsAcceptKey(key))
+                {
+                    return ProgramAction.MoveNext;
+                }
+                else
+                {
+                    return ProgramAction.NoAction;
+                }
+            }
 
+            override public void Print()
+            {
+                if (this.Focused)
+                {
+                    Console.WriteLine("(minutes) [[     ]]");
+                }
+                else
+                {
+                    Console.WriteLine("(minutes)  [     ]");
+                }
             }
         }
 
@@ -214,11 +439,33 @@ namespace Isolation_Diary
                     Console.WriteLine("[ EXIT ]");
                 }
             }
-            override public void WaitForInput()
+            override public ProgramAction WaitForInput()
             {
-                string key = Console.ReadKey().KeyChar.ToString();
+                ConsoleKeyInfo key = Console.ReadKey();
+                if (IsMovementKey(key))
+                {
+                    return Movement(key);
+                }
+                else if (IsAcceptKey(key))
+                {
+                    return ProgramAction.Accept;
+                }
+                else
+                {
+                    return ProgramAction.NoAction;
+                }
+            }
 
-                Console.WriteLine($"[[ {key} ]]");
+            override protected bool IsAcceptKey(ConsoleKeyInfo key)
+            {
+                if ((key.Key == System.ConsoleKey.Enter) | (key.KeyChar == ' '))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
 
