@@ -37,7 +37,15 @@ namespace Isolation_Diary
                             new ControlLine(new Text("Rate your proficiency"), new FieldRating())
                         }
                         )
-                    );
+                    ); this.ControlGroups.Add(
+                        new ControlGroup(
+                            new Text(""),
+                            new List<ControlLine> {
+                                new ControlLine(new Text(""), new Button())
+                            }
+                            )
+                        );
+                this.ControlGroups[0].FocusFirst();
             }
 
             // Methods
@@ -92,6 +100,11 @@ namespace Isolation_Diary
                 {
                     cl.Print();
                 }
+                Console.Write("\n");
+            }
+            public void FocusFirst()
+            {
+                this.ControlLines[0].FocusFirst();
             }
         }
 
@@ -99,28 +112,51 @@ namespace Isolation_Diary
         {
             // properties
             protected Text Text { get; set; }
-            protected Field Field { get; set; }
+            protected Control Control { get; set; }
 
             // constructor
-            public ControlLine(Text text, Field field)
+            public ControlLine(Text text, Control control)
             {
                 this.Text = text;
-                this.Field = field;
+                this.Control = control;
             }
 
             // methods
             public void Print()
             {
                 this.Text.Print();
-                this.Field.Print();
+                this.Control.Print();
+            }
+            public void FocusFirst()
+            {
+                this.Control.Focus();
             }
         }
 
-        public class Field
+        public abstract class Control
         {
-            public void Print()
+            // properties
+            protected Boolean Focused { get; set; }
+
+            // methods
+            public abstract void Print();
+            public void Focus()
             {
-                Console.WriteLine("[     ]");
+                this.Focused = true;
+            }
+        }
+
+        public class Field : Control
+        {
+           override public void Print()
+            {
+                if (this.Focused) {
+                    Console.WriteLine("[[     ]]");
+                }
+                else
+                {
+                    Console.WriteLine("[     ]");
+                }
             }
         }
 
@@ -132,6 +168,21 @@ namespace Isolation_Diary
         public class FieldTime : Field
         {
 
+        }
+
+        public class Button : Control
+        {
+            override public void Print()
+            {
+                if (this.Focused)
+                {
+                    Console.WriteLine("[[ EXIT ]]");
+                }
+                else
+                {
+                    Console.WriteLine("[ EXIT ]");
+                }
+            }
         }
 
         static void WriteDB(Hashtable db)
