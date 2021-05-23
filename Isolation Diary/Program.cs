@@ -10,6 +10,11 @@ namespace Isolation_Diary
         public static string[] attributes = {"Date", "Symptoms", "Mental", "SkillTime", "SkillRating"};
         public class Page
         {
+            protected Text Text { get; set; }
+            public Page()
+            {
+                this.Text = new Text("Welcome to the Isolation Diary!");
+            }
             public void Print()
             {
                 Console.WriteLine("page");
@@ -19,6 +24,16 @@ namespace Isolation_Diary
 
             }
 
+        }
+
+        public class Text
+        {
+            protected string Value { get; set; }
+
+            public Text(string value)
+            {
+                this.Value = value;
+            }
         }
 
         static void WriteDB(Hashtable db)
@@ -39,8 +54,7 @@ namespace Isolation_Diary
             }
         }
 
-        //PLEASE ADD YOUR OWN COMMENTS EXPLAINING WHAT THIS DOES
-        //Note: this is like "loading game"!
+        
         static Hashtable ReadDB()
         {
             //Returns an empty table if the file doesn't exist.
