@@ -24,8 +24,17 @@ namespace Isolation_Diary
                     new ControlGroup(
                         new Text("Health: "),
                         new List<ControlLine> {
-                            new ControlLine(),
-                            new ControlLine()
+                            new ControlLine(new Text("Rate your symptoms"), new FieldRating()),
+                            new ControlLine(new Text("Rate your mental health"), new FieldRating())
+                        }
+                        )
+                    );
+                this.ControlGroups.Add(
+                    new ControlGroup(
+                        new Text("Skill: "),
+                        new List<ControlLine> {
+                            new ControlLine(new Text("How much practice today?"), new FieldTime()),
+                            new ControlLine(new Text("Rate your proficiency"), new FieldRating())
                         }
                         )
                     );
@@ -90,19 +99,39 @@ namespace Isolation_Diary
         {
             // properties
             protected Text Text { get; set; }
-            // TO DO! control
+            protected Field Field { get; set; }
 
             // constructor
-            public ControlLine()
+            public ControlLine(Text text, Field field)
             {
-                this.Text = new Text("ControlLine");
+                this.Text = text;
+                this.Field = field;
             }
 
             // methods
             public void Print()
             {
-                Console.WriteLine("ControlLine");
+                this.Text.Print();
+                this.Field.Print();
             }
+        }
+
+        public class Field
+        {
+            public void Print()
+            {
+                Console.WriteLine("[     ]");
+            }
+        }
+
+        public class FieldRating : Field
+        {
+
+        }
+
+        public class FieldTime : Field
+        {
+
         }
 
         static void WriteDB(Hashtable db)
