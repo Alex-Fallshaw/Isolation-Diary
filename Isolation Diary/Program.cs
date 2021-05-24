@@ -67,19 +67,35 @@ namespace Isolation_Diary
                 ProgramAction a = this.getFocusedControlGroup().WaitForInput();
                 while (a != ProgramAction.Exit)
                 {
-                    if (a == ProgramAction.MoveNext) { this.MoveNext(); }
-                    else if (a == ProgramAction.MovePrevious) { this.MovePrevious(); }
+                    if (a == ProgramAction.MoveNext) { this.MoveNextGroup(); }
+                    else if (a == ProgramAction.MovePrevious) { this.MovePreviousGroup(); }
                     Console.Clear();
                     this.Print();
                     a = this.getFocusedControlGroup().WaitForInput();
                 }
             }
 
-            private void MoveNext()
+            public bool canMoveNextGroup()
             {
-                if (getFocusedControlGroup().canMoveNext())
+                return this.FocusedControlGroup < (this.ControlGroups.Count - 1);
+            }
+
+            public bool canMovePreviousGroup()
+            {
+                return this.FocusedControlGroup > 0;
+            }
+
+            private void MoveNextGroup()
+            {
+                if (getFocusedControlGroup().canMoveNextLine())
                 {
-                    getFocusedControlGroup().MoveNext();
+                    getFocusedControlGroup().MoveNextLine();
+                }
+                else if (canMoveNextGroup())
+                {
+                    getFocusedControlGroup().UnFocus();
+                    this.FocusedControlGroup += 1;
+                    getFocusedControlGroup().FocusFirst();
                 }
                 else
                 {
@@ -87,11 +103,17 @@ namespace Isolation_Diary
                 }
             }
 
-            private void MovePrevious()
+            private void MovePreviousGroup()
             {
-                if (getFocusedControlGroup().canMovePrevious())
+                if (getFocusedControlGroup().canMovePrevoiusLine())
                 {
-                    getFocusedControlGroup().MovePrevious();
+                    getFocusedControlGroup().MovePrevoiusLine();
+                }
+                else if (canMovePreviousGroup())
+                {
+                    getFocusedControlGroup().UnFocus();
+                    this.FocusedControlGroup -= 1;
+                    getFocusedControlGroup().FocusLast();
                 }
                 else
                 {
@@ -184,27 +206,27 @@ namespace Isolation_Diary
                 return this.ControlLines[this.FocusedControlLine];
             }
 
-            public bool canMoveNext()
+            public bool canMoveNextLine()
             {
                 return this.FocusedControlLine < (this.ControlLines.Count - 1);
             }
 
-            public bool canMovePrevious()
+            public bool canMovePrevoiusLine()
             {
                 return this.FocusedControlLine > 0;
             }
 
-            public void MoveNext()
+            public void MoveNextLine()
             {
                 this.getFocusedControlLine().UnFocus();
-                this.FocusedControlLine = this.FocusedControlLine + 1;
+                this.FocusedControlLine += 1;
                 this.getFocusedControlLine().Focus();
             }
 
-            public void MovePrevious()
+            public void MovePrevoiusLine()
             {
                 this.getFocusedControlLine().UnFocus();
-                this.FocusedControlLine = this.FocusedControlLine - 1;
+                this.FocusedControlLine -= 1;
                 this.getFocusedControlLine().Focus();
             }
 
@@ -276,9 +298,8 @@ namespace Isolation_Diary
 
             public abstract ProgramAction WaitForInput();
 
-            protected ProgramAction Movement(ConsoleKeyInfo key)
+            protected ProgramAction GetMovementFromConsoleKeyInfo(ConsoleKeyInfo key)
             {
-                // TODO FIXME
                 return ProgramAction.MoveNext;
             }
 
@@ -353,7 +374,7 @@ namespace Isolation_Diary
                 ConsoleKeyInfo key = Console.ReadKey();
                 if (IsMovementKey(key))
                 {
-                    return Movement(key);
+                    return GetMovementFromConsoleKeyInfo(key);
                 }
                 else if (IsAppendKey(key))
                 {
@@ -393,7 +414,7 @@ namespace Isolation_Diary
                 ConsoleKeyInfo key = Console.ReadKey();
                 if (IsMovementKey(key))
                 {
-                    return Movement(key);
+                    return GetMovementFromConsoleKeyInfo(key);
                 }
                 else if (IsAppendKey(key))
                 {
@@ -444,7 +465,7 @@ namespace Isolation_Diary
                 ConsoleKeyInfo key = Console.ReadKey();
                 if (IsMovementKey(key))
                 {
-                    return Movement(key);
+                    return GetMovementFromConsoleKeyInfo(key);
                 }
                 else if (IsAcceptKey(key))
                 {
